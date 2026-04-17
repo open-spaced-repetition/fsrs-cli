@@ -12,6 +12,11 @@ categories = ["command-line-utilities", "science"]
 name = "fsrs"
 path = "src/main.rs"
 
+[features]
+default = ["serve", "repl"]
+serve = ["dep:axum", "dep:tokio-stream", "dep:futures", "dep:tower-http", "dep:utoipa", "dep:utoipa-axum", "dep:utoipa-swagger-ui", "dep:tempfile"]
+repl = ["dep:rustyline", "dep:shellwords"]
+
 [dependencies]
 fsrs = { git = "https://github.com/open-spaced-repetition/fsrs-rs" }
 clap = { version = "4.6.1", features = ["derive"] }
@@ -21,21 +26,26 @@ csv = "1.4.0"
 chrono = "0.4.44"
 anyhow = "1.0"
 indicatif = "0.18.4"
-axum = { version = "0.8", features = ["json", "multipart"] }
 tokio = { version = "1", features = ["full"] }
-utoipa = { version = "5", features = ["axum_extras"] }
-utoipa-axum = "0.2"
-utoipa-swagger-ui = { version = "9", features = ["axum"] }
-tokio-stream = "0.1"
-futures = "0.3"
-tower-http = { version = "0.6", features = ["cors"] }
-tempfile = "3"
-rustyline = "18"
-shellwords = "1"
+
+# serve feature dependencies
+axum = { version = "0.8", features = ["json", "multipart"], optional = true }
+utoipa = { version = "5", features = ["axum_extras"], optional = true }
+utoipa-axum = { version = "0.2", optional = true }
+utoipa-swagger-ui = { version = "9", features = ["axum"], optional = true }
+tokio-stream = { version = "0.1", optional = true }
+futures = { version = "0.3", optional = true }
+tower-http = { version = "0.6", features = ["cors"], optional = true }
+tempfile = { version = "3", optional = true }
+
+# repl feature dependencies
+rustyline = { version = "18", optional = true }
+shellwords = { version = "1", optional = true }
 
 [dev-dependencies]
 assert_cmd = "2"
 predicates = "3"
+tempfile = "3"
 
 [profile.release]
 opt-level = 3
