@@ -18,14 +18,16 @@ serve = ["dep:axum", "dep:tokio-stream", "dep:futures", "dep:tower-http", "dep:u
 repl = ["dep:rustyline", "dep:shellwords"]
 
 [dependencies]
-fsrs = { git = "https://github.com/open-spaced-repetition/fsrs-rs" }
+fsrs = { git = "https://github.com/open-spaced-repetition/fsrs-rs", rev = "b46226aae5ea03959c27cd81abb603bb6b744907" }
 clap = { version = "4.6.1", features = ["derive"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
 csv = "1.4.0"
 chrono = "0.4.44"
+chrono-tz = "0.10"
 anyhow = "1.0"
 indicatif = "0.18.4"
+itertools = "0.14"
 tokio = { version = "1", features = ["full"] }
 
 # serve feature dependencies
@@ -45,6 +47,8 @@ shellwords = { version = "1", optional = true }
 [dev-dependencies]
 assert_cmd = "2"
 predicates = "3"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 tempfile = "3"
 
 [profile.release]
