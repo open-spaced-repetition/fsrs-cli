@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   CARGO_TERM_COLOR: always
   REVLOG_CSV_URL: "https://github.com/open-spaced-repetition/fsrs-rs/files/15046782/revlog.csv"
