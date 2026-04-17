@@ -8,6 +8,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  REVLOG_CSV_URL: "https://github.com/open-spaced-repetition/fsrs-rs/files/15046782/revlog.csv"
 
 jobs:
   check:
@@ -50,4 +51,24 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+      - name: Cache revlog.csv
+        id: cache-revlog
+        uses: actions/cache@v4
+        with:
+          path: revlog.csv
+          key: revlog-csv-v1
+      - name: Download revlog.csv
+        if: steps.cache-revlog.outputs.cache-hit != 'true'
+        run: curl -sL "$REVLOG_CSV_URL" -o revlog.csv
       - run: cargo test
+
+  serve-test:
+    name: Serve Integration Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --release
+      - name: Run serve tests
+        run: FSRS_BIN=./target/release/fsrs ./tests/serve_test.sh
