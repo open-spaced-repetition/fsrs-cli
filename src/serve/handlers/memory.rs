@@ -20,7 +20,13 @@ pub async fn memory_state(
     let item = reviews_to_item(&req.reviews);
 
     let starting_state = match (req.starting_stability, req.starting_difficulty) {
-        (Some(s), Some(d)) => Some(MemoryStateDto { stability: s, difficulty: d }.into()),
+        (Some(s), Some(d)) => Some(
+            MemoryStateDto {
+                stability: s,
+                difficulty: d,
+            }
+            .into(),
+        ),
         (None, None) => None,
         _ => {
             return Err(to_err(
@@ -50,7 +56,13 @@ pub async fn memory_history(
     let item = reviews_to_item(&req.reviews);
 
     let starting_state = match (req.starting_stability, req.starting_difficulty) {
-        (Some(s), Some(d)) => Some(MemoryStateDto { stability: s, difficulty: d }.into()),
+        (Some(s), Some(d)) => Some(
+            MemoryStateDto {
+                stability: s,
+                difficulty: d,
+            }
+            .into(),
+        ),
         (None, None) => None,
         _ => {
             return Err(to_err(
@@ -80,7 +92,11 @@ pub async fn retrievability(
 ) -> Result<Json<f32>, Json<ErrorResponse>> {
     let decay = req.decay.unwrap_or(fsrs::FSRS6_DEFAULT_DECAY);
     // Difficulty is not needed for retrievability calculation, so we can set it to any value (e.g. 0.0)
-    let state: fsrs::MemoryState = MemoryStateDto { stability: req.stability, difficulty: 0.0 }.into();
+    let state: fsrs::MemoryState = MemoryStateDto {
+        stability: req.stability,
+        difficulty: 0.0,
+    }
+    .into();
     let r = fsrs::current_retrievability(state, req.ivl, decay);
     Ok(Json(r))
 }

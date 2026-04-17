@@ -37,7 +37,12 @@ pub async fn evaluate_params(request: Request) -> Response {
     let (items, params) = if is_multipart(&headers) {
         let multipart = match Multipart::from_request(request, &()).await {
             Ok(m) => m,
-            Err(e) => return Json(ErrorResponse { error: e.to_string() }).into_response(),
+            Err(e) => {
+                return Json(ErrorResponse {
+                    error: e.to_string(),
+                })
+                .into_response();
+            }
         };
         match parse_csv_from_multipart(multipart).await {
             Ok(items) => (items, None),
@@ -46,18 +51,33 @@ pub async fn evaluate_params(request: Request) -> Response {
     } else {
         let body = match axum::body::to_bytes(request.into_body(), 50 * 1024 * 1024).await {
             Ok(b) => b,
-            Err(e) => return Json(ErrorResponse { error: e.to_string() }).into_response(),
+            Err(e) => {
+                return Json(ErrorResponse {
+                    error: e.to_string(),
+                })
+                .into_response();
+            }
         };
         match serde_json::from_slice::<EvaluateRequest>(&body) {
             Ok(req) => (reviews_to_items(&req.items), req.parameters),
-            Err(e) => return Json(ErrorResponse { error: e.to_string() }).into_response(),
+            Err(e) => {
+                return Json(ErrorResponse {
+                    error: e.to_string(),
+                })
+                .into_response();
+            }
         }
     };
 
     let params = params.unwrap_or_default();
     let fsrs = match FSRS::new(&params) {
         Ok(f) => f,
-        Err(e) => return Json(ErrorResponse { error: e.to_string() }).into_response(),
+        Err(e) => {
+            return Json(ErrorResponse {
+                error: e.to_string(),
+            })
+            .into_response();
+        }
     };
 
     match tokio::task::spawn_blocking(move || fsrs.evaluate(items, |_| true)).await {
@@ -66,7 +86,13 @@ pub async fn evaluate_params(request: Request) -> Response {
             rmse_bins: eval.rmse_bins,
         })
         .into_response(),
-        Ok(Err(e)) => Json(ErrorResponse { error: e.to_string() }).into_response(),
-        Err(e) => Json(ErrorResponse { error: e.to_string() }).into_response(),
+        Ok(Err(e)) => Json(ErrorResponse {
+            error: e.to_string(),
+        })
+        .into_response(),
+        Err(e) => Json(ErrorResponse {
+            error: e.to_string(),
+        })
+        .into_response(),
     }
 }

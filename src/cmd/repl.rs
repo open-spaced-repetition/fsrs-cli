@@ -60,7 +60,10 @@ impl Completer for FsrsHelper {
             0 => Ok((0, Self::match_candidates(&top_names, ""))),
             1 if !line.ends_with(' ') => {
                 let prefix = parts[0];
-                Ok((pos - prefix.len(), Self::match_candidates(&top_names, prefix)))
+                Ok((
+                    pos - prefix.len(),
+                    Self::match_candidates(&top_names, prefix),
+                ))
             }
             _ => {
                 let cmd = parts[0];
@@ -94,9 +97,7 @@ impl Hinter for FsrsHelper {
 
         let (names, prefix): (Vec<&String>, &str) = match parts.len() {
             0 => return None,
-            1 if !line.ends_with(' ') => {
-                (self.commands.iter().map(|(n, _)| n).collect(), parts[0])
-            }
+            1 if !line.ends_with(' ') => (self.commands.iter().map(|(n, _)| n).collect(), parts[0]),
             2 if !line.ends_with(' ') => {
                 let cmd = parts[0];
                 match self.commands.iter().find(|(n, _)| n == cmd) {

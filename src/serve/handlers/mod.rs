@@ -30,7 +30,9 @@ pub fn routes() -> OpenApiRouter {
         .routes(routes!(optimize::benchmark_params))
         // evaluate
         .routes(routes!(evaluate::evaluate_params))
-        .routes(routes!(evaluate_with_time_series_splits::evaluate_with_time_series_splits))
+        .routes(routes!(
+            evaluate_with_time_series_splits::evaluate_with_time_series_splits
+        ))
         // simulate
         .routes(routes!(simulate::simulate_run))
         .routes(routes!(simulate::optimal_retention))
@@ -61,7 +63,10 @@ fn reviews_to_item(reviews: &[ReviewDto]) -> FSRSItem {
 }
 
 fn reviews_to_items(items: &[Vec<ReviewDto>]) -> Vec<FSRSItem> {
-    items.iter().map(|reviews| reviews_to_item(reviews)).collect()
+    items
+        .iter()
+        .map(|reviews| reviews_to_item(reviews))
+        .collect()
 }
 
 fn is_multipart(headers: &HeaderMap) -> bool {

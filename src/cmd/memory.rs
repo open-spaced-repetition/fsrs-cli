@@ -190,15 +190,9 @@ fn run_history(args: HistoryArgs) -> Result<()> {
 
     output::print_with(&states, args.json, |r| {
         println!("Historical Memory States:");
-        println!(
-            "{:<6} {:<12} {:<12}",
-            "Index", "Stability", "Difficulty"
-        );
+        println!("{:<6} {:<12} {:<12}", "Index", "Stability", "Difficulty");
         for (i, s) in r.iter().enumerate() {
-            println!(
-                "{:<6} {:<12.4} {:<12.4}",
-                i, s.stability, s.difficulty
-            );
+            println!("{:<6} {:<12.4} {:<12.4}", i, s.stability, s.difficulty);
         }
     })
 }

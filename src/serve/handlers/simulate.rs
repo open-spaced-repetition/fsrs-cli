@@ -59,8 +59,16 @@ pub async fn simulate_run(
         total_reviews,
         total_learned,
         final_memorized,
-        avg_reviews_per_day: if days > 0 { total_reviews as f32 / days as f32 } else { 0.0 },
-        avg_cost_per_day: if days > 0 { total_cost / days as f32 } else { 0.0 },
+        avg_reviews_per_day: if days > 0 {
+            total_reviews as f32 / days as f32
+        } else {
+            0.0
+        },
+        avg_cost_per_day: if days > 0 {
+            total_cost / days as f32
+        } else {
+            0.0
+        },
         total_cost,
         days,
     }))

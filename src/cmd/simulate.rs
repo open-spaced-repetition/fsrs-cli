@@ -180,9 +180,7 @@ fn build_config(
 }
 
 fn run_simulate(args: SimulateRunArgs) -> Result<()> {
-    let params = args
-        .parameters
-        .unwrap_or_default();
+    let params = args.parameters.unwrap_or_default();
     let config = build_config(
         args.deck_size,
         args.learn_span,
@@ -212,8 +210,16 @@ fn run_simulate(args: SimulateRunArgs) -> Result<()> {
     let out = SimulateOutput {
         total_reviews,
         total_learned,
-        avg_reviews_per_day: if days > 0 { total_reviews as f32 / days as f32 } else { 0.0 },
-        avg_cost_per_day: if days > 0 { total_cost / days as f32 } else { 0.0 },
+        avg_reviews_per_day: if days > 0 {
+            total_reviews as f32 / days as f32
+        } else {
+            0.0
+        },
+        avg_cost_per_day: if days > 0 {
+            total_cost / days as f32
+        } else {
+            0.0
+        },
         total_cost,
         final_memorized,
         days,
@@ -239,9 +245,7 @@ fn run_simulate(args: SimulateRunArgs) -> Result<()> {
 }
 
 fn run_optimal_retention(args: OptimalRetentionArgs) -> Result<()> {
-    let params = args
-        .parameters
-        .unwrap_or_default();
+    let params = args.parameters.unwrap_or_default();
     let config = build_config(
         args.deck_size,
         args.learn_span,
@@ -271,9 +275,7 @@ fn run_optimal_retention(args: OptimalRetentionArgs) -> Result<()> {
 }
 
 fn run_workload(args: WorkloadArgs) -> Result<()> {
-    let params = args
-        .parameters
-        .unwrap_or_default();
+    let params = args.parameters.unwrap_or_default();
     let config = build_config(
         args.deck_size,
         args.learn_span,

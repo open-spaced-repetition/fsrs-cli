@@ -46,7 +46,12 @@ pub async fn evaluate_with_time_series_splits(request: Request) -> Response {
     let (items, enable_short_term, num_relearning_steps) = if is_multipart(&headers) {
         let multipart = match Multipart::from_request(request, &()).await {
             Ok(m) => m,
-            Err(e) => return Json(ErrorResponse { error: e.to_string() }).into_response(),
+            Err(e) => {
+                return Json(ErrorResponse {
+                    error: e.to_string(),
+                })
+                .into_response();
+            }
         };
         match parse_csv_from_multipart(multipart).await {
             Ok(items) => (items, true, None),
@@ -55,7 +60,12 @@ pub async fn evaluate_with_time_series_splits(request: Request) -> Response {
     } else {
         let body = match axum::body::to_bytes(request.into_body(), 50 * 1024 * 1024).await {
             Ok(b) => b,
-            Err(e) => return Json(ErrorResponse { error: e.to_string() }).into_response(),
+            Err(e) => {
+                return Json(ErrorResponse {
+                    error: e.to_string(),
+                })
+                .into_response();
+            }
         };
         match serde_json::from_slice::<EvaluateWithTimeSeriesSplitsRequest>(&body) {
             Ok(req) => (
@@ -63,7 +73,12 @@ pub async fn evaluate_with_time_series_splits(request: Request) -> Response {
                 req.enable_short_term.unwrap_or(true),
                 req.num_relearning_steps,
             ),
-            Err(e) => return Json(ErrorResponse { error: e.to_string() }).into_response(),
+            Err(e) => {
+                return Json(ErrorResponse {
+                    error: e.to_string(),
+                })
+                .into_response();
+            }
         }
     };
 
@@ -105,7 +120,13 @@ pub async fn evaluate_with_time_series_splits(request: Request) -> Response {
             rmse_bins: eval.rmse_bins,
         })
         .into_response(),
-        Ok(Err(e)) => Json(ErrorResponse { error: e.to_string() }).into_response(),
-        Err(e) => Json(ErrorResponse { error: e.to_string() }).into_response(),
+        Ok(Err(e)) => Json(ErrorResponse {
+            error: e.to_string(),
+        })
+        .into_response(),
+        Err(e) => Json(ErrorResponse {
+            error: e.to_string(),
+        })
+        .into_response(),
     }
 }

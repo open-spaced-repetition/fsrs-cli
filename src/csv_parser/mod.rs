@@ -95,11 +95,7 @@ fn convert_card_entries(
 /// 3. Compute delta_t using timezone-aware day boundaries with day_cutoff
 /// 4. Filter out items where current review delta_t == 0
 /// 5. Sort all items by review_time across cards
-pub fn revlog_to_fsrs_items(
-    rows: &[RevlogEntry],
-    tz: &Tz,
-    day_cutoff_hours: i64,
-) -> Vec<FSRSItem> {
+pub fn revlog_to_fsrs_items(rows: &[RevlogEntry], tz: &Tz, day_cutoff_hours: i64) -> Vec<FSRSItem> {
     let mut items: Vec<(i64, FSRSItem)> = rows
         .iter()
         .cloned()

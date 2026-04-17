@@ -118,7 +118,14 @@ fn test_next_states_new_card() {
 #[test]
 fn test_next_states_existing_card() {
     let v: NextStates = run_json(&[
-        "schedule", "-s", "10.0", "--difficulty", "5.0", "--ivl", "3", "--json",
+        "schedule",
+        "-s",
+        "10.0",
+        "--difficulty",
+        "5.0",
+        "--ivl",
+        "3",
+        "--json",
     ]);
     assert_approx(v.again.memory.stability, 1.2588);
     assert_approx(v.hard.memory.stability, 15.038);
@@ -138,7 +145,15 @@ fn test_next_states_custom_retention() {
 #[test]
 fn test_next_states_human_readable() {
     cmd()
-        .args(["schedule", "-s", "10.0", "--difficulty", "5.0", "--ivl", "3"])
+        .args([
+            "schedule",
+            "-s",
+            "10.0",
+            "--difficulty",
+            "5.0",
+            "--ivl",
+            "3",
+        ])
         .assert()
         .success()
         .stdout(
@@ -177,8 +192,15 @@ fn test_memory_state() {
 #[test]
 fn test_memory_state_with_starting_state() {
     let v: MemoryState = run_json(&[
-        "memory", "state", "-H", "3:5,2:10",
-        "--starting-stability", "5.0", "--starting-difficulty", "5.0", "--json",
+        "memory",
+        "state",
+        "-H",
+        "3:5,2:10",
+        "--starting-stability",
+        "5.0",
+        "--starting-difficulty",
+        "5.0",
+        "--json",
     ]);
     assert_approx(v.stability, 31.1913);
     assert_approx(v.difficulty, 6.6595);
@@ -186,9 +208,7 @@ fn test_memory_state_with_starting_state() {
 
 #[test]
 fn test_memory_history() {
-    let v: Vec<MemoryState> = run_json(&[
-        "memory", "history", "-H", "3:0,3:1,3:5,2:10", "--json",
-    ]);
+    let v: Vec<MemoryState> = run_json(&["memory", "history", "-H", "3:0,3:1,3:5,2:10", "--json"]);
     assert_eq!(v.len(), 4);
     assert_approx(v[0].stability, 2.3065);
     assert_approx(v[0].difficulty, 2.118);
@@ -210,14 +230,28 @@ fn test_memory_history_human_readable() {
 
 #[test]
 fn test_retrievability() {
-    let v: f64 = run_json(&["memory", "retrievability", "-s", "10.0", "-i", "5.0", "--json"]);
+    let v: f64 = run_json(&[
+        "memory",
+        "retrievability",
+        "-s",
+        "10.0",
+        "-i",
+        "5.0",
+        "--json",
+    ]);
     assert_approx(v, 0.9403);
 }
 
 #[test]
 fn test_from_sm2() {
     let v: MemoryState = run_json(&[
-        "memory", "from-sm2", "--ease-factor", "2.5", "--interval", "30.0", "--json",
+        "memory",
+        "from-sm2",
+        "--ease-factor",
+        "2.5",
+        "--interval",
+        "30.0",
+        "--json",
     ]);
     assert_approx(v.stability, 30.0);
     assert_approx(v.difficulty, 6.0934);
@@ -245,8 +279,12 @@ fn test_memory_state_invalid_rating_in_history() {
 fn test_memory_state_starting_stability_without_difficulty() {
     cmd()
         .args([
-            "memory", "state", "-H", "3:0,3:1",
-            "--starting-stability", "5.0",
+            "memory",
+            "state",
+            "-H",
+            "3:0,3:1",
+            "--starting-stability",
+            "5.0",
         ])
         .assert()
         .failure()
@@ -306,8 +344,15 @@ fn test_simulate_workload_custom_retention() {
 #[test]
 fn test_simulate_run() {
     let v: SimulateOutput = run_json(&[
-        "simulate", "run",
-        "--deck-size", "100", "--learn-span", "30", "--seed", "42", "--json",
+        "simulate",
+        "run",
+        "--deck-size",
+        "100",
+        "--learn-span",
+        "30",
+        "--seed",
+        "42",
+        "--json",
     ]);
     assert_eq!(v.total_reviews, 373);
     assert_eq!(v.total_learned, 100);
@@ -320,8 +365,14 @@ fn test_simulate_run() {
 fn test_simulate_run_human_readable() {
     cmd()
         .args([
-            "simulate", "run",
-            "--deck-size", "100", "--learn-span", "30", "--seed", "42",
+            "simulate",
+            "run",
+            "--deck-size",
+            "100",
+            "--learn-span",
+            "30",
+            "--seed",
+            "42",
         ])
         .assert()
         .success()
@@ -334,10 +385,19 @@ fn test_simulate_run_human_readable() {
 #[test]
 fn test_simulate_run_with_limits() {
     let v: SimulateOutput = run_json(&[
-        "simulate", "run",
-        "--deck-size", "50", "--learn-span", "10",
-        "--learn-limit", "5", "--review-limit", "20",
-        "--seed", "42", "--json",
+        "simulate",
+        "run",
+        "--deck-size",
+        "50",
+        "--learn-span",
+        "10",
+        "--learn-limit",
+        "5",
+        "--review-limit",
+        "20",
+        "--seed",
+        "42",
+        "--json",
     ]);
     assert_eq!(v.total_reviews, 65);
     assert_eq!(v.total_learned, 50);
@@ -417,9 +477,8 @@ fn test_evaluate_invalid_csv_format() {
 #[test]
 fn test_evaluate_revlog_csv() {
     let file = create_revlog_csv();
-    let v: EvaluateOutput = run_json(&[
-        "evaluate", "--csv", file.path().to_str().unwrap(), "--json",
-    ]);
+    let v: EvaluateOutput =
+        run_json(&["evaluate", "--csv", file.path().to_str().unwrap(), "--json"]);
     assert_approx(v.log_loss, 0.0824);
     assert_approx(v.rmse_bins, 0.0848);
 }
@@ -428,7 +487,10 @@ fn test_evaluate_revlog_csv() {
 fn test_benchmark_revlog_csv() {
     let file = create_revlog_csv();
     let v: Vec<f64> = run_json(&[
-        "benchmark", "--csv", file.path().to_str().unwrap(), "--json",
+        "benchmark",
+        "--csv",
+        file.path().to_str().unwrap(),
+        "--json",
     ]);
     assert_eq!(v.len(), 21);
     assert_approx(v[0], 1.2422);

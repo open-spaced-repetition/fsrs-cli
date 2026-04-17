@@ -75,9 +75,7 @@ pub async fn run(cmd: Commands) -> anyhow::Result<()> {
         Commands::Optimize(args) => optimize::run(args),
         Commands::Benchmark(args) => benchmark::run(args),
         Commands::Evaluate(args) => evaluate::run(args),
-        Commands::EvaluateWithTimeSeriesSplits(args) => {
-            evaluate_with_time_series_splits::run(args)
-        }
+        Commands::EvaluateWithTimeSeriesSplits(args) => evaluate_with_time_series_splits::run(args),
         Commands::Simulate(cmd) => simulate::run(cmd),
         Commands::Params(args) => params::run(args),
         #[cfg(feature = "serve")]
