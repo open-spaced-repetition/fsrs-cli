@@ -99,7 +99,9 @@ pub fn run(args: OptimizeArgs) -> Result<()> {
         }
     }
 
-    let parameters = handle.join().expect("optimize thread panicked")?;
+    let parameters = handle
+        .join()
+        .map_err(|_| anyhow::anyhow!("optimize thread panicked"))??;
 
     output::print_with(&parameters, json, |r| {
         println!("Optimized Parameters:");

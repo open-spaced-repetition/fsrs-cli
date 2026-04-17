@@ -71,7 +71,9 @@ pub fn run(args: BenchmarkArgs) -> Result<()> {
         pb.finish_and_clear();
     }
 
-    let parameters = handle.join().expect("benchmark thread panicked");
+    let parameters = handle
+        .join()
+        .map_err(|_| anyhow::anyhow!("benchmark thread panicked"))?;
 
     output::print_with(&parameters, args.json, |r| {
         println!("Benchmark Parameters:");

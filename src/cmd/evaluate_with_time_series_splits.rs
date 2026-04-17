@@ -108,7 +108,9 @@ pub fn run(args: EvaluateWithTimeSeriesSplitsArgs) -> Result<()> {
         }
     }
 
-    let eval = handle.join().expect("cross-validate thread panicked")?;
+    let eval = handle
+        .join()
+        .map_err(|_| anyhow::anyhow!("cross-validate thread panicked"))??;
 
     let result = EvaluateWithTimeSeriesSplitsOutput {
         log_loss: eval.log_loss,
