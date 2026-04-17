@@ -59,6 +59,7 @@ jobs:
           key: revlog-csv-v1
       - name: Download revlog.csv
         if: steps.cache-revlog.outputs.cache-hit != 'true'
+        shell: bash
         run: curl -sL "$REVLOG_CSV_URL" -o revlog.csv
       - run: cargo test
 
