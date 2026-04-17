@@ -8,7 +8,7 @@ use std::thread;
 use std::time::Duration;
 
 use crate::csv_parser::CsvArgs;
-use crate::output::{self, ParametersOutput};
+use crate::output;
 
 #[derive(Args)]
 pub struct OptimizeArgs {
@@ -51,10 +51,9 @@ impl CsvArgs for OptimizeArgs {
 
 pub fn run(args: OptimizeArgs) -> Result<()> {
     let items = args.load_items()?;
-    let count = items.len();
 
     if !args.json {
-        eprintln!("Loaded {} review items from CSV", count);
+        eprintln!("Loaded {} review items from CSV", items.len());
     }
 
     let progress = CombinedProgressState::new_shared();
@@ -102,14 +101,11 @@ pub fn run(args: OptimizeArgs) -> Result<()> {
 
     let parameters = handle.join().expect("optimize thread panicked")?;
 
-    let result = ParametersOutput { parameters, count };
-
-    output::print_with(&result, json, |r| {
-        println!("Optimized Parameters ({} items):", r.count);
+    output::print_with(&parameters, json, |r| {
+        println!("Optimized Parameters:");
         println!(
             "[{}]",
-            r.parameters
-                .iter()
+            r.iter()
                 .map(|p| format!("{:.4}", p))
                 .collect::<Vec<_>>()
                 .join(", ")

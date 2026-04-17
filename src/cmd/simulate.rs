@@ -113,6 +113,14 @@ pub struct WorkloadArgs {
     #[arg(long, default_value_t = 1800.0)]
     pub max_cost_perday: f32,
 
+    /// New cards per day limit
+    #[arg(long)]
+    pub learn_limit: Option<usize>,
+
+    /// Review cards per day limit
+    #[arg(long)]
+    pub review_limit: Option<usize>,
+
     /// FSRS parameters as comma-separated floats
     #[arg(short, long, value_delimiter = ',')]
     pub parameters: Option<Vec<f32>>,
@@ -271,8 +279,8 @@ fn run_workload(args: WorkloadArgs) -> Result<()> {
         args.learn_span,
         args.max_cost_perday,
         36500.0,
-        None,
-        None,
+        args.learn_limit,
+        args.review_limit,
     );
 
     let workload = expected_workload(&params, args.retention, &config)?;
