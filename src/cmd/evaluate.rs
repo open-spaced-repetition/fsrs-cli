@@ -5,6 +5,7 @@ use indicatif::{ProgressBar, ProgressStyle};
 use serde::Serialize;
 use std::path::PathBuf;
 
+use crate::config;
 use crate::csv_parser::CsvArgs;
 use crate::output;
 
@@ -14,7 +15,7 @@ pub struct EvaluateArgs {
     #[arg(short, long)]
     pub csv: PathBuf,
 
-    /// FSRS parameters to evaluate (comma-separated). If omitted, evaluates default parameters
+    /// FSRS parameters to evaluate (comma-separated). If omitted, uses saved custom parameters when available
     #[arg(short, long, value_delimiter = ',')]
     pub parameters: Option<Vec<f32>>,
 
@@ -82,8 +83,8 @@ pub fn run(args: EvaluateArgs) -> Result<()> {
         eprintln!("Loaded {} review items from CSV", count);
     }
 
-    let params = args.parameters.clone().unwrap_or_default();
-    let fsrs = FSRS::new(&params)?;
+    let parameters = config::resolve_parameters(args.parameters.clone())?;
+    let fsrs = FSRS::new(&parameters)?;
 
     let (pb, progress_cb) = make_progress_cb(args.json);
     let eval = fsrs.evaluate(items, progress_cb)?;

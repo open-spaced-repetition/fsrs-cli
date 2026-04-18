@@ -3,6 +3,7 @@ use clap::{Args, Subcommand};
 use fsrs::{SimulatorConfig, expected_workload, optimal_retention, simulate};
 use serde::Serialize;
 
+use crate::config;
 use crate::output;
 
 #[derive(Subcommand)]
@@ -36,8 +37,8 @@ pub struct SimulateRunArgs {
     pub max_ivl: f32,
 
     /// Desired retention rate (0.70-0.95)
-    #[arg(short, long, default_value_t = 0.9)]
-    pub retention: f32,
+    #[arg(short, long)]
+    pub retention: Option<f32>,
 
     /// New cards per day limit
     #[arg(long)]
@@ -51,7 +52,7 @@ pub struct SimulateRunArgs {
     #[arg(long)]
     pub seed: Option<u64>,
 
-    /// FSRS parameters as comma-separated floats
+    /// FSRS parameters as comma-separated floats. If omitted, uses saved custom parameters when available
     #[arg(short, long, value_delimiter = ',')]
     pub parameters: Option<Vec<f32>>,
 
@@ -86,7 +87,7 @@ pub struct OptimalRetentionArgs {
     #[arg(long)]
     pub review_limit: Option<usize>,
 
-    /// FSRS parameters as comma-separated floats
+    /// FSRS parameters as comma-separated floats. If omitted, uses saved custom parameters when available
     #[arg(short, long, value_delimiter = ',')]
     pub parameters: Option<Vec<f32>>,
 
@@ -98,8 +99,8 @@ pub struct OptimalRetentionArgs {
 #[derive(Args)]
 pub struct WorkloadArgs {
     /// Desired retention rate (0.70-0.95)
-    #[arg(short, long, default_value_t = 0.9)]
-    pub retention: f32,
+    #[arg(short, long)]
+    pub retention: Option<f32>,
 
     /// Total number of cards in the deck
     #[arg(long, default_value_t = 10000)]
@@ -121,7 +122,7 @@ pub struct WorkloadArgs {
     #[arg(long)]
     pub review_limit: Option<usize>,
 
-    /// FSRS parameters as comma-separated floats
+    /// FSRS parameters as comma-separated floats. If omitted, uses saved custom parameters when available
     #[arg(short, long, value_delimiter = ',')]
     pub parameters: Option<Vec<f32>>,
 
@@ -180,7 +181,8 @@ fn build_config(
 }
 
 fn run_simulate(args: SimulateRunArgs) -> Result<()> {
-    let params = args.parameters.unwrap_or_default();
+    let parameters = config::resolve_parameters(args.parameters)?;
+    let retention = config::resolve_retention(args.retention)?;
     let config = build_config(
         args.deck_size,
         args.learn_span,
@@ -195,11 +197,11 @@ fn run_simulate(args: SimulateRunArgs) -> Result<()> {
             "Running simulation: {} cards, {} days, {:.0}% retention...",
             args.deck_size,
             args.learn_span,
-            args.retention * 100.0
+            retention * 100.0
         );
     }
 
-    let result = simulate(&config, &params, args.retention, args.seed, None)?;
+    let result = simulate(&config, &parameters, retention, args.seed, None)?;
 
     let total_reviews: usize = result.review_cnt_per_day.iter().sum();
     let total_learned: usize = result.learn_cnt_per_day.iter().sum();
@@ -245,7 +247,7 @@ fn run_simulate(args: SimulateRunArgs) -> Result<()> {
 }
 
 fn run_optimal_retention(args: OptimalRetentionArgs) -> Result<()> {
-    let params = args.parameters.unwrap_or_default();
+    let parameters = config::resolve_parameters(args.parameters)?;
     let config = build_config(
         args.deck_size,
         args.learn_span,
@@ -259,7 +261,7 @@ fn run_optimal_retention(args: OptimalRetentionArgs) -> Result<()> {
         eprintln!("Searching for optimal retention...");
     }
 
-    let retention = optimal_retention(&config, &params, |_| true, None, None)?;
+    let retention = optimal_retention(&config, &parameters, |_| true, None, None)?;
 
     let result = OptimalRetentionOutput {
         optimal_retention: retention,
@@ -275,7 +277,8 @@ fn run_optimal_retention(args: OptimalRetentionArgs) -> Result<()> {
 }
 
 fn run_workload(args: WorkloadArgs) -> Result<()> {
-    let params = args.parameters.unwrap_or_default();
+    let parameters = config::resolve_parameters(args.parameters)?;
+    let retention = config::resolve_retention(args.retention)?;
     let config = build_config(
         args.deck_size,
         args.learn_span,
@@ -285,11 +288,11 @@ fn run_workload(args: WorkloadArgs) -> Result<()> {
         args.review_limit,
     );
 
-    let workload = expected_workload(&params, args.retention, &config)?;
+    let workload = expected_workload(&parameters, retention, &config)?;
 
     let result = WorkloadOutput {
         expected_workload: workload,
-        retention: args.retention,
+        retention,
     };
 
     output::print_with(&result, args.json, |r| {

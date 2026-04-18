@@ -1,9 +1,9 @@
 mod benchmark;
+mod config;
 mod evaluate;
 mod evaluate_with_time_series_splits;
 mod memory;
 mod optimize;
-mod params;
 #[cfg(feature = "repl")]
 pub mod repl;
 mod schedule;
@@ -55,8 +55,8 @@ pub enum Commands {
     #[command(subcommand)]
     Simulate(simulate::SimulateCommand),
 
-    /// Show or inspect FSRS parameters
-    Params(params::ParamsArgs),
+    /// Inspect or change CLI defaults
+    Config(config::ConfigArgs),
 
     /// Start HTTP API server with OpenAPI docs and SSE support
     #[cfg(feature = "serve")]
@@ -77,7 +77,7 @@ pub async fn run(cmd: Commands) -> anyhow::Result<()> {
         Commands::Evaluate(args) => evaluate::run(args),
         Commands::EvaluateWithTimeSeriesSplits(args) => evaluate_with_time_series_splits::run(args),
         Commands::Simulate(cmd) => simulate::run(cmd),
-        Commands::Params(args) => params::run(args),
+        Commands::Config(args) => config::run(args),
         #[cfg(feature = "serve")]
         Commands::Serve(args) => serve::start(&args.host, args.port).await,
         #[cfg(feature = "repl")]

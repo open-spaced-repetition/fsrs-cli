@@ -2,6 +2,7 @@ use anyhow::{Result, bail};
 use clap::{Args, Subcommand};
 use fsrs::{FSRS, FSRSItem, FSRSReview, MemoryState};
 
+use crate::config;
 use crate::output;
 
 #[derive(Subcommand)]
@@ -33,7 +34,7 @@ pub struct StateArgs {
     #[arg(long)]
     pub starting_difficulty: Option<f32>,
 
-    /// FSRS parameters as comma-separated floats
+    /// FSRS parameters as comma-separated floats. If omitted, uses saved custom parameters when available
     #[arg(short, long, value_delimiter = ',')]
     pub parameters: Option<Vec<f32>>,
 
@@ -56,7 +57,7 @@ pub struct HistoryArgs {
     #[arg(long)]
     pub starting_difficulty: Option<f32>,
 
-    /// FSRS parameters as comma-separated floats
+    /// FSRS parameters as comma-separated floats. If omitted, uses saved custom parameters when available
     #[arg(short, long, value_delimiter = ',')]
     pub parameters: Option<Vec<f32>>,
 
@@ -102,7 +103,7 @@ pub struct FromSm2Args {
     #[arg(short = 'R', long, default_value_t = 0.9)]
     pub sm2_retention: f32,
 
-    /// FSRS parameters as comma-separated floats
+    /// FSRS parameters as comma-separated floats. If omitted, uses saved custom parameters when available
     #[arg(short, long, value_delimiter = ',')]
     pub parameters: Option<Vec<f32>>,
 
@@ -164,8 +165,8 @@ fn make_starting_state(
 fn run_state(args: StateArgs) -> Result<()> {
     let reviews = parse_review_history(&args.history)?;
     let starting_state = make_starting_state(args.starting_stability, args.starting_difficulty)?;
-    let params = args.parameters.unwrap_or_default();
-    let fsrs = FSRS::new(&params)?;
+    let parameters = config::resolve_parameters(args.parameters)?;
+    let fsrs = FSRS::new(&parameters)?;
 
     let item = FSRSItem { reviews };
     let state = fsrs.memory_state(item, starting_state)?;
@@ -180,8 +181,8 @@ fn run_state(args: StateArgs) -> Result<()> {
 fn run_history(args: HistoryArgs) -> Result<()> {
     let reviews = parse_review_history(&args.history)?;
     let starting_state = make_starting_state(args.starting_stability, args.starting_difficulty)?;
-    let params = args.parameters.unwrap_or_default();
-    let fsrs = FSRS::new(&params)?;
+    let parameters = config::resolve_parameters(args.parameters)?;
+    let fsrs = FSRS::new(&parameters)?;
 
     let item = FSRSItem {
         reviews: reviews.clone(),
@@ -211,8 +212,8 @@ fn run_retrievability(args: RetrievabilityArgs) -> Result<()> {
 }
 
 fn run_from_sm2(args: FromSm2Args) -> Result<()> {
-    let params = args.parameters.unwrap_or_default();
-    let fsrs = FSRS::new(&params)?;
+    let parameters = config::resolve_parameters(args.parameters)?;
+    let fsrs = FSRS::new(&parameters)?;
 
     let state = fsrs.memory_state_from_sm2(args.ease_factor, args.interval, args.sm2_retention)?;
 

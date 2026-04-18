@@ -2,14 +2,32 @@ use assert_cmd::Command;
 use predicates::prelude::*;
 use serde::Deserialize;
 use std::io::Write;
-use tempfile::NamedTempFile;
+use std::path::Path;
+use tempfile::{NamedTempFile, TempDir};
 
 fn cmd() -> Command {
     Command::cargo_bin("fsrs").unwrap()
 }
 
+fn cmd_with_config(config_dir: &Path) -> Command {
+    let mut command = cmd();
+    command
+        .env("FSRS_CLI_CONFIG_DIR", config_dir)
+        .env("XDG_CONFIG_HOME", config_dir)
+        .env("HOME", config_dir)
+        .env("APPDATA", config_dir)
+        .env("LOCALAPPDATA", config_dir);
+    command
+}
+
 fn run_json<T: for<'de> Deserialize<'de>>(args: &[&str]) -> T {
     let output = cmd().args(args).output().unwrap();
+    assert!(output.status.success(), "Command failed: {:?}", args);
+    serde_json::from_slice(&output.stdout).expect("Invalid JSON output")
+}
+
+fn run_json_with_config<T: for<'de> Deserialize<'de>>(config_dir: &Path, args: &[&str]) -> T {
+    let output = cmd_with_config(config_dir).args(args).output().unwrap();
     assert!(output.status.success(), "Command failed: {:?}", args);
     serde_json::from_slice(&output.stdout).expect("Invalid JSON output")
 }
@@ -65,6 +83,18 @@ struct WorkloadOutput {
     retention: f64,
 }
 
+#[derive(Deserialize)]
+struct ConfigOutput {
+    config_file: String,
+    defaults: ConfigDefaultsOutput,
+}
+
+#[derive(Deserialize)]
+struct ConfigDefaultsOutput {
+    parameters: Vec<f64>,
+    retention: f64,
+}
+
 // ============================================================
 // CLI argument parsing tests
 // ============================================================
@@ -77,7 +107,7 @@ fn test_help_output() {
             .and(predicate::str::contains("optimize"))
             .and(predicate::str::contains("evaluate"))
             .and(predicate::str::contains("simulate"))
-            .and(predicate::str::contains("params")),
+            .and(predicate::str::contains("config")),
     );
 }
 
@@ -294,12 +324,16 @@ fn test_memory_state_starting_stability_without_difficulty() {
 }
 
 // ============================================================
-// Params command tests
+// Config command tests
 // ============================================================
 
 #[test]
-fn test_params_default() {
-    let v: Vec<f64> = run_json(&["params", "--json"]);
+fn test_parameters_default() {
+    let config_dir = TempDir::new().unwrap();
+    let v: Vec<f64> = run_json_with_config(
+        config_dir.path(),
+        &["config", "parameters", "get", "--json"],
+    );
     assert_eq!(v.len(), 21);
     assert_approx(v[0], 0.212);
     assert_approx(v[4], 6.4133);
@@ -307,20 +341,234 @@ fn test_params_default() {
 }
 
 #[test]
-fn test_params_custom_values() {
-    let v: Vec<f64> = run_json(&["params", "--values", "0.1,0.2,0.3", "--json"]);
-    assert_eq!(v.len(), 3);
-    assert_approx(v[0], 0.1);
-    assert_approx(v[1], 0.2);
-    assert_approx(v[2], 0.3);
+fn test_config_default_json() {
+    let config_dir = TempDir::new().unwrap();
+    let v: ConfigOutput = run_json_with_config(config_dir.path(), &["config", "--json"]);
+    assert!(v.config_file.contains("config.json"));
+    assert_eq!(v.defaults.parameters.len(), 21);
+    assert_approx(v.defaults.parameters[0], 0.212);
+    assert_approx(v.defaults.retention, 0.9);
 }
 
 #[test]
-fn test_params_human_readable() {
-    cmd().args(["params"]).assert().success().stdout(
-        predicate::str::contains("FSRS Parameters")
-            .and(predicate::str::contains("initial_stability_again")),
+fn test_config_default_human_output_shows_quoted_path_and_builtin_retention() {
+    let config_dir = TempDir::new().unwrap();
+    let config_root = config_dir.path().join("config dir with spaces");
+    std::fs::create_dir_all(&config_root).unwrap();
+    let config_file = config_root.join("config.json");
+
+    cmd_with_config(&config_root)
+        .args(["config"])
+        .assert()
+        .success()
+        .stdout(
+            predicate::str::contains(format!("File: \"{}\" (not created)", config_file.display()))
+                .and(predicate::str::contains("Retention: 0.9000")),
+        );
+}
+
+#[test]
+fn test_config_human_output_marks_file_as_created_after_save() {
+    let config_dir = TempDir::new().unwrap();
+    let config_root = config_dir.path().join("config dir with spaces");
+    std::fs::create_dir_all(&config_root).unwrap();
+    let config_file = config_root.join("config.json");
+
+    cmd_with_config(&config_root)
+        .args(["config", "retention", "set", "0.85"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains(format!(
+            "Config file: \"{}\" (created)",
+            config_file.display()
+        )));
+
+    cmd_with_config(&config_root)
+        .args(["config"])
+        .assert()
+        .success()
+        .stdout(
+            predicate::str::contains(format!("File: \"{}\" (created)", config_file.display()))
+                .and(predicate::str::contains("Retention: 0.8500")),
+        );
+}
+
+#[test]
+fn test_parameters_save_and_reuse_custom_values() {
+    let config_dir = TempDir::new().unwrap();
+    let custom = "0.5,1.0,2.0,6.0,5.0,0.8,3.0,0.001,1.8,0.2,0.8,1.5,0.06,0.26,1.6,0.6,1.9,0.5,0.09,0.07,0.15";
+
+    let saved: Vec<f64> = run_json_with_config(
+        config_dir.path(),
+        &["config", "parameters", "set", custom, "--json"],
     );
+    assert_eq!(saved.len(), 21);
+    assert_approx(saved[0], 0.5);
+    assert_approx(saved[4], 5.0);
+
+    let active: Vec<f64> = run_json_with_config(
+        config_dir.path(),
+        &["config", "parameters", "get", "--json"],
+    );
+    assert_approx(active[0], 0.5);
+    assert_approx(active[4], 5.0);
+
+    let schedule: NextStates = run_json_with_config(config_dir.path(), &["schedule", "--json"]);
+    assert_approx(schedule.again.memory.stability, 0.5);
+    assert_approx(schedule.hard.memory.stability, 1.0);
+    assert_approx(schedule.good.memory.stability, 2.0);
+    assert_approx(schedule.easy.memory.stability, 6.0);
+    assert_approx(schedule.again.memory.difficulty, 5.0);
+}
+
+#[test]
+fn test_parameters_reset_restores_defaults() {
+    let config_dir = TempDir::new().unwrap();
+    let custom = "0.5,1.0,2.0,6.0,5.0,0.8,3.0,0.001,1.8,0.2,0.8,1.5,0.06,0.26,1.6,0.6,1.9,0.5,0.09,0.07,0.15";
+
+    cmd_with_config(config_dir.path())
+        .args(["config", "parameters", "set", custom, "--json"])
+        .assert()
+        .success();
+
+    let reset: Vec<f64> = run_json_with_config(
+        config_dir.path(),
+        &["config", "parameters", "reset", "--json"],
+    );
+    assert_eq!(reset.len(), 21);
+    assert_approx(reset[0], 0.212);
+
+    let schedule: NextStates = run_json_with_config(config_dir.path(), &["schedule", "--json"]);
+    assert_approx(schedule.again.memory.stability, 0.212);
+    assert_approx(schedule.again.memory.difficulty, 6.4133);
+}
+
+#[test]
+fn test_parameters_human_readable() {
+    cmd()
+        .args(["config", "parameters"])
+        .assert()
+        .success()
+        .stdout(
+            predicate::str::contains("FSRS Parameters")
+                .and(predicate::str::contains("initial_stability_again")),
+        );
+}
+
+#[test]
+fn test_config_parameters_set_rejects_invalid_values() {
+    let config_dir = TempDir::new().unwrap();
+
+    cmd_with_config(config_dir.path())
+        .args([
+            "config",
+            "parameters",
+            "set",
+            "0.5,1.0,2.0,6.0,5.0,0.8,3.0,0.001,1.8,0.2,0.8,1.5,0.06,0.26,1.6,0.6,1.9,0.5,0.09,0.07",
+        ])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("expected 21 FSRS parameters"));
+}
+
+#[test]
+fn test_config_parameters_set_rejects_non_finite_values() {
+    let config_dir = TempDir::new().unwrap();
+
+    cmd_with_config(config_dir.path())
+        .args([
+            "config",
+            "parameters",
+            "set",
+            "0.5,1.0,2.0,6.0,5.0,0.8,3.0,0.001,1.8,0.2,0.8,1.5,0.06,0.26,1.6,0.6,1.9,0.5,0.09,0.07,NaN",
+        ])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("FSRS parameters must be finite numbers"));
+}
+
+#[test]
+fn test_config_parameters_set_accepts_bracketed_values() {
+    let config_dir = TempDir::new().unwrap();
+
+    let saved: Vec<f64> = run_json_with_config(
+        config_dir.path(),
+        &[
+            "config",
+            "parameters",
+            "set",
+            "[0.5,1.0,2.0,6.0,5.0,0.8,3.0,0.001,1.8,0.2,0.8,1.5,0.06,0.26,1.6,0.6,1.9,0.5,0.09,0.07,0.15]",
+            "--json",
+        ],
+    );
+
+    assert_eq!(saved.len(), 21);
+    assert_approx(saved[0], 0.5);
+    assert_approx(saved[20], 0.15);
+}
+
+#[test]
+fn test_config_retention_set_get_reset() {
+    let config_dir = TempDir::new().unwrap();
+
+    let default_retention: f64 =
+        run_json_with_config(config_dir.path(), &["config", "retention", "get", "--json"]);
+    assert_approx(default_retention, 0.9);
+
+    let saved: f64 = run_json_with_config(
+        config_dir.path(),
+        &["config", "retention", "set", "0.85", "--json"],
+    );
+    assert_approx(saved, 0.85);
+
+    let active: f64 =
+        run_json_with_config(config_dir.path(), &["config", "retention", "get", "--json"]);
+    assert_approx(active, 0.85);
+
+    let config: ConfigOutput = run_json_with_config(config_dir.path(), &["config", "--json"]);
+    assert_approx(config.defaults.retention, 0.85);
+
+    let reset: serde_json::Value = run_json_with_config(
+        config_dir.path(),
+        &["config", "retention", "reset", "--json"],
+    );
+    assert!(reset.is_null());
+
+    let active: f64 =
+        run_json_with_config(config_dir.path(), &["config", "retention", "get", "--json"]);
+    assert_approx(active, 0.9);
+
+    let config: ConfigOutput = run_json_with_config(config_dir.path(), &["config", "--json"]);
+    assert_approx(config.defaults.retention, 0.9);
+}
+
+#[test]
+fn test_schedule_uses_saved_retention() {
+    let config_dir = TempDir::new().unwrap();
+
+    cmd_with_config(config_dir.path())
+        .args(["config", "retention", "set", "0.85", "--json"])
+        .assert()
+        .success();
+
+    let v: NextStates = run_json_with_config(config_dir.path(), &["schedule", "--json"]);
+    assert_approx(v.again.interval, 0.4042);
+    assert_approx(v.good.interval, 4.3972);
+}
+
+#[test]
+fn test_simulate_workload_uses_saved_retention() {
+    let config_dir = TempDir::new().unwrap();
+
+    cmd_with_config(config_dir.path())
+        .args(["config", "retention", "set", "0.85", "--json"])
+        .assert()
+        .success();
+
+    let v: WorkloadOutput =
+        run_json_with_config(config_dir.path(), &["simulate", "workload", "--json"]);
+    assert_approx(v.expected_workload, 120.4056);
+    assert_approx(v.retention, 0.85);
 }
 
 // ============================================================

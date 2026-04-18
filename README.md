@@ -19,8 +19,8 @@ cargo build --release
 ## Quick Start
 
 ```bash
-# Show default parameters
-fsrs params
+# Show active parameters
+fsrs config
 
 # Schedule next review for a new card
 fsrs schedule --json
@@ -42,7 +42,7 @@ fsrs serve
 Get next review states for all four ratings.
 
 ```bash
-# New card with default parameters
+# New card with active parameters and retention
 fsrs schedule --json
 
 # Existing card
@@ -119,17 +119,36 @@ fsrs simulate optimal-retention --json
 fsrs simulate workload --retention 0.9 --json
 ```
 
-### params
+### config
 
-Show or inspect FSRS parameters.
+Inspect or change CLI defaults.
 
 ```bash
-# Show default parameters
-fsrs params --json
+# Show active parameters
+# If you've saved custom parameters before, this prints the saved set.
+fsrs config --json
 
-# Inspect custom parameters
-fsrs params --values "0.5,1.0,2.0,6.0,5.0,0.8,3.0,0.001,1.8,0.2,0.8,1.5,0.06,0.26,1.6,0.6,1.9,0.5,0.09,0.07,0.15"
+# Save custom parameters as the CLI default
+fsrs config parameters set 0.5,1.0,2.0,6.0,5.0,0.8,3.0,0.001,1.8,0.2,0.8,1.5,0.06,0.26,1.6,0.6,1.9,0.5,0.09,0.07,0.15
+
+# Bracketed form is also supported
+# Quote it in shells like zsh to avoid glob expansion
+fsrs config parameters set "[0.5,1.0,2.0,6.0,5.0,0.8,3.0,0.001,1.8,0.2,0.8,1.5,0.06,0.26,1.6,0.6,1.9,0.5,0.09,0.07,0.15]"
+
+# Reset back to built-in defaults
+fsrs config parameters reset
+
+# Save custom retention as the CLI default
+fsrs config retention set 0.85
+
+# Show saved retention
+fsrs config retention get --json
+
+# Reset retention back to built-in defaults
+fsrs config retention reset
 ```
+
+Commands that accept `--parameters` or `--retention` will automatically use saved config defaults when the flag is omitted.
 
 ### serve
 
