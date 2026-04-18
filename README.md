@@ -19,7 +19,7 @@ cargo build --release
 ## Quick Start
 
 ```bash
-# Show active parameters
+# Show active config
 fsrs config
 
 # Schedule next review for a new card
