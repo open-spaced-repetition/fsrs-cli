@@ -99,10 +99,57 @@ jobs:
           cd ..
           cat checksums.txt
 
+      - name: Generate release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${{ github.repository }}/releases/generate-notes" \
+            -f tag_name="${{ github.ref_name }}" \
+            -f target_commitish="${{ github.sha }}" \
+            --jq '.body' > release-notes.md
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          generate_release_notes: true
+          name: ${{ github.ref_name }}
+          body_path: release-notes.md
+          draft: false
+          prerelease: false
+          fail_on_unmatched_files: true
           files: |
             artifacts/**/*
             checksums.txt
+
+  update-homebrew:
+    name: Update Homebrew Formula
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Export Homebrew tarball checksums
+        shell: bash
+        run: ./.github/scripts/export_homebrew_env.sh artifacts
+
+      - name: Update Formula
+        shell: bash
+        run: ./.github/scripts/update_homebrew_formula.sh Formula/fsrs.rb
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/fsrs.rb
+          git diff --cached --quiet && exit 0
+          git commit -m "Update Homebrew formula to v${{ env.VERSION }}"
+          git push origin HEAD:${{ github.event.repository.default_branch }}
