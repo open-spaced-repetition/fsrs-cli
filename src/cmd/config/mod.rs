@@ -77,6 +77,6 @@ fn run_get_config(json: bool) -> Result<()> {
             config::format_source_label(path.as_path(), has_saved_parameters)
         );
         parameters::print_parameters(&r.defaults.parameters);
-        println!("  Retention: {:.4}", r.defaults.retention);
+        println!("  Retention: {:.1}", r.defaults.retention);
     })
 }

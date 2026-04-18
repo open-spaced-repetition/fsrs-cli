@@ -86,7 +86,7 @@ fn run_set(args: SetRetentionArgs) -> Result<()> {
             "Config file: {}",
             config::format_display_path_with_status(path.as_path())
         );
-        println!("Retention: {:.4}", r);
+        println!("Retention: {:.1}", r);
     })
 }
 

@@ -267,13 +267,13 @@ fn config_dir() -> Result<PathBuf> {
     #[cfg(target_os = "windows")]
     {
         let appdata = env_path("APPDATA")?;
-        return Ok(appdata.join("fsrs-cli"));
+        Ok(appdata.join("fsrs-cli"))
     }
 
     #[cfg(target_os = "macos")]
     {
         let home = env_path("HOME")?;
-        return Ok(home.join("Library/Application Support/fsrs-cli"));
+        Ok(home.join("Library/Application Support/fsrs-cli"))
     }
 
     #[cfg(not(any(target_os = "windows", target_os = "macos")))]
