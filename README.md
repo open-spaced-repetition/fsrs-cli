@@ -5,6 +5,26 @@ A CLI tool for [FSRS](https://github.com/open-spaced-repetition/fsrs-rs) (Free S
 ## Install
 
 ```bash
+curl -fsSL https://raw.githubusercontent.com/open-spaced-repetition/fsrs-cli/main/install.sh | sh
+```
+
+Install a specific version or custom directory:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/open-spaced-repetition/fsrs-cli/main/install.sh | sh -s -- --version v0.1.0
+curl -fsSL https://raw.githubusercontent.com/open-spaced-repetition/fsrs-cli/main/install.sh | sh -s -- --dir /usr/local/bin
+```
+
+Update an existing installation:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/open-spaced-repetition/fsrs-cli/main/install.sh | sh -s -- --update
+curl -fsSL https://raw.githubusercontent.com/open-spaced-repetition/fsrs-cli/main/install.sh | sh -s -- --update --version v0.1.0
+```
+
+Or install with Cargo:
+
+```bash
 cargo install --git https://github.com/open-spaced-repetition/fsrs-cli
 ```
 
