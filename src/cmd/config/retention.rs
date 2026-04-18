@@ -63,14 +63,12 @@ fn run_get(args: GetRetentionArgs) -> Result<()> {
     let has_saved_retention = store.has(ConfigKey::Retention)?;
     let retention = store.active_retention()?;
 
-    output::print_with(&retention, args.json, |r| match r {
-        retention => {
-            println!(
-                "Retention: {:.4} (source: {})",
-                retention,
-                config::format_source_label(path.as_path(), has_saved_retention)
-            );
-        }
+    output::print_with(&retention, args.json, |r| {
+        println!(
+            "Retention: {:.2} (source: {})",
+            r,
+            config::format_source_label(path.as_path(), has_saved_retention)
+        );
     })
 }
 
@@ -86,7 +84,7 @@ fn run_set(args: SetRetentionArgs) -> Result<()> {
             "Config file: {}",
             config::format_display_path_with_status(path.as_path())
         );
-        println!("Retention: {:.1}", r);
+        println!("Retention: {:.2}", r);
     })
 }
 

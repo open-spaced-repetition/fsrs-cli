@@ -363,7 +363,7 @@ fn test_config_default_human_output_shows_quoted_path_and_builtin_retention() {
         .success()
         .stdout(
             predicate::str::contains(format!("File: \"{}\" (not created)", config_file.display()))
-                .and(predicate::str::contains("Retention: 0.9000")),
+                .and(predicate::str::contains("Retention: 0.90")),
         );
 }
 
@@ -389,7 +389,7 @@ fn test_config_human_output_marks_file_as_created_after_save() {
         .success()
         .stdout(
             predicate::str::contains(format!("File: \"{}\" (created)", config_file.display()))
-                .and(predicate::str::contains("Retention: 0.8500")),
+                .and(predicate::str::contains("Retention: 0.85")),
         );
 }
 

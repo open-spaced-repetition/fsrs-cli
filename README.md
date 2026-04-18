@@ -124,8 +124,15 @@ fsrs simulate workload --retention 0.9 --json
 Inspect or change CLI defaults.
 
 ```bash
-# Show active parameters
-# If you've saved custom parameters before, this prints the saved set.
+# Show active config
+# If you have not saved retention yet, the built-in default 0.90 is used.
+fsrs config
+
+# Human-readable output quotes the config file path and shows whether it exists:
+# File: ".../config.json" (created)
+# File: ".../config.json" (not created)
+
+# JSON output shows the active values currently in effect
 fsrs config --json
 
 # Save custom parameters as the CLI default
@@ -141,7 +148,9 @@ fsrs config parameters reset
 # Save custom retention as the CLI default
 fsrs config retention set 0.85
 
-# Show saved retention
+# Show active retention
+# If no custom retention has been saved, this returns the built-in default 0.90.
+fsrs config retention get
 fsrs config retention get --json
 
 # Reset retention back to built-in defaults
