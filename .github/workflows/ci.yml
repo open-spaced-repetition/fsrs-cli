@@ -27,17 +27,23 @@ jobs:
   fmt:
     name: Format
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
-          components: rustfmt, clippy
+          components: rustfmt
+      - run: cargo fmt --all -- --check
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
       - uses: Swatinem/rust-cache@v2
-      - run: cargo clippy --fix --workspace
-      - run: cargo fmt --all
-      - uses: autofix-ci/action@v1
+      - run: cargo clippy -- -D warnings
 
   test:
     name: Test (${{ matrix.os }})

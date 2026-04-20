@@ -1,0 +1,20 @@
+name: autofix.ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  autofix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - run: rustup toolchain install stable --profile minimal --component rustfmt --component clippy
+      - run: cargo clippy --fix --workspace
+      - run: cargo fmt --all
+      - uses: autofix-ci/action@v1
