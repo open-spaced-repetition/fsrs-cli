@@ -12,7 +12,7 @@ jobs:
   autofix:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: Swatinem/rust-cache@v2
       - run: rustup toolchain install stable --profile minimal --component rustfmt --component clippy
       - run: cargo clippy --fix --workspace
